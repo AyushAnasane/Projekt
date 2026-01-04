@@ -1,0 +1,12 @@
+{
+    "manifest_version": 3,
+    "name": "Schedulr",
+    "version": "0.1",
+    "description": "Convert email events into calendar reminders",
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "permissions": [
+        "activeTab"
+    ]
+}
