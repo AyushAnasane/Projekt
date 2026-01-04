@@ -1,0 +1,31 @@
+.title {
+  text-align: center;
+  padding: 5%;
+}
+
+.buttonpos {
+  display: flex;
+  justify-content: center;
+}
+
+.button {
+  background-color: blueviolet;
+  color: rgb(0, 0, 0);
+  padding: 10px 20px;
+  border: 2px;
+  border-color: black;
+  border-style: solid;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 3px;
+}
+
+.button:hover{
+    background-color: rgb(205, 111, 231);
+    transform: translateY(-2px);
+    box-shadow: 0 3px 6px;
+}
+.button:active {
+    transform: scale(0.98);
+    background-color: blueviolet;
+}
