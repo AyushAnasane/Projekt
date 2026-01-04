@@ -1,17 +1,38 @@
+
 console.log("popup.js loaded");
 
 const button = document.querySelector(".button");
 
+if (!button) {
+    console.error("Button not found in popup.html");
+}
+
 button.addEventListener("click", () => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const currentUrl = tabs[0].url;
-
-        if (!currentUrl.includes("mail.google.com")) {
-            alert("Please open your college Gmail");
+        if (!tabs || tabs.length === 0) {
+            alert("No active tab found");
             return;
         }
 
-        alert("Gmail detected. Checking account type...");
+        const tab = tabs[0];
+
+        if (!tab.url || !tab.url.includes("mail.google.com")) {
+            alert("Please open Gmail first");
+            return;
+        }
+
+        chrome.tabs.sendMessage(
+            tab.id,
+            { type: "REQUEST_EMAIL" },
+            () => {
+                if (chrome.runtime.lastError) {
+                    console.error(chrome.runtime.lastError.message);
+                    alert("Content script not loaded. Please refresh Gmail.");
+                } else {
+                    alert("Gmail detected. Checking account type...");
+                }
+            }
+        );
     });
 });
 
@@ -26,7 +47,7 @@ chrome.runtime.onMessage.addListener((message) => {
     }
 
     if (userEmail.endsWith(".edu")) {
-        alert("College email detected   ");
+        alert("College email detected 🎓");
     } else {
         alert("This extension works only for college emails");
     }
