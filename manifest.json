@@ -8,5 +8,15 @@
     },
     "permissions": [
         "activeTab"
+    ],
+    "content_scripts": [
+        {
+            "matches": [
+                "https://mail.google.com/*"
+            ],
+            "js": [
+                "content.js"
+            ]
+        }
     ]
 }
