@@ -1,6 +1,6 @@
 console.log("content.js loaded");
 
-chrome.runtime.onMessage.addListener((message) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type !== "REQUEST_EMAIL") return;
 
     console.log("REQUEST_EMAIL received");
@@ -15,7 +15,6 @@ chrome.runtime.onMessage.addListener((message) => {
             const match = text.match(
                 /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/
             );
-
             if (match) {
                 email = match[0];
                 break;
@@ -24,9 +23,9 @@ chrome.runtime.onMessage.addListener((message) => {
 
         console.log("Detected email:", email);
 
-        chrome.runtime.sendMessage({
-            type: "USER_EMAIL",
-            email: email
-        });
+        sendResponse({ email });
+
     }, 1500);
+
+    return true;
 });
