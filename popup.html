@@ -2,13 +2,31 @@
 <html lang="en">
 <head>
   <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+
 </head>
 
 <body>
-  <h1 class="title">Schedulr</h1>
+  <div class="app">
+    
+    <aside class="sidebar">
+      <div class="user-tab">
+        <div class="avatar"></div>
+        <span>User</span>
+      </div>
+      <div class="filter-tab">
+        <div class="filter"></div>
+        <span>Filters</span>
+      </div>
 
-  <div class="buttonpos">
-    <button class="button">Click me</button>
+      <button class="settings-btn">settings</button>
+    </aside>
+
+  <div class="container">
+    <h1 class="title">Schedulr</h1>
+    <button class="button">Scan</button>
   </div>
   <script src="popup.js"></script>
 </body>
