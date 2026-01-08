@@ -1,4 +1,3 @@
-
 console.log("popup.js loaded");
 
 const button = document.querySelector(".button");
@@ -24,31 +23,27 @@ button.addEventListener("click", () => {
         chrome.tabs.sendMessage(
             tab.id,
             { type: "REQUEST_EMAIL" },
-            () => {
+            (response) => {
                 if (chrome.runtime.lastError) {
                     console.error(chrome.runtime.lastError.message);
                     alert("Content script not loaded. Please refresh Gmail.");
+                    return;
+                }
+
+                const email = response?.email;
+
+                if (!email) {
+                    alert("Could not detect email. Please refresh Gmail.");
+                    return;
+                }
+
+                if (email.endsWith(".edu")) {
+                    alert("College email detected: " + email);
                 } else {
-                    alert("Gmail detected. Checking account type...");
+                    alert("This extension works only for college emails");
                 }
             }
         );
+
     });
-});
-
-chrome.runtime.onMessage.addListener((message) => {
-    if (message.type !== "USER_EMAIL") return;
-
-    const userEmail = message.email;
-
-    if (!userEmail || typeof userEmail !== "string") {
-        alert("Could not detect email. Please refresh Gmail.");
-        return;
-    }
-
-    if (userEmail.endsWith(".edu")) {
-        alert("College email detected 🎓");
-    } else {
-        alert("This extension works only for college emails");
-    }
 });
