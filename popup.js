@@ -12,51 +12,51 @@ const themeBtn = document.querySelector('.theme-btn');
 
 function showAlert(message, type = 'info') {
     console.log(`[ALERT] ${type}: ${message}`);
-    
+
     const alertBox = document.getElementById('popupAlert');
     if (!alertBox) {
         console.error('❌ Alert box not found!');
         return;
     }
-    
+
     // Remove hidden class FIRST
     alertBox.classList.remove('hidden');
-    
+
     // Clear and update content
     alertBox.innerHTML = '';
-    
+
     const typeConfig = {
-        success: { 
-            bg: 'bg-green-500/20', 
-            border: 'border-green-500/40', 
+        success: {
+            bg: 'bg-green-500/20',
+            border: 'border-green-500/40',
             text: 'text-green-300',
             icon: '✅'
         },
-        error: { 
-            bg: 'bg-red-500/20', 
-            border: 'border-red-500/40', 
+        error: {
+            bg: 'bg-red-500/20',
+            border: 'border-red-500/40',
             text: 'text-red-300',
             icon: '❌'
         },
-        warning: { 
-            bg: 'bg-yellow-500/20', 
-            border: 'border-yellow-500/40', 
+        warning: {
+            bg: 'bg-yellow-500/20',
+            border: 'border-yellow-500/40',
             text: 'text-yellow-300',
             icon: '⚠️'
         },
-        info: { 
-            bg: 'bg-blue-500/20', 
-            border: 'border-blue-500/40', 
+        info: {
+            bg: 'bg-blue-500/20',
+            border: 'border-blue-500/40',
             text: 'text-blue-300',
             icon: 'ℹ️'
         }
     };
-    
+
     const config = typeConfig[type] || typeConfig.info;
-    
+
     // Set classes
     alertBox.className = `alert p-4 rounded-xl border ${config.border} ${config.bg} ${config.text} text-sm animate-[slideIn_0.3s_ease-out]`;
-    
+
     // Create content
     alertBox.innerHTML = `
         <div class="flex items-start">
@@ -70,7 +70,7 @@ function showAlert(message, type = 'info') {
             </button>
         </div>
     `;
-    
+
     // Auto-hide after 5 seconds (except errors)
     if (type !== 'error') {
         setTimeout(() => {
@@ -92,21 +92,21 @@ function startProgressAnimation() {
     progressContainer.classList.remove('hidden');
     progressBar.style.width = '0%';
     progressPercent.textContent = '0%';
-    
+
     let progress = 0;
     return new Promise((resolve) => {
         const interval = setInterval(() => {
-            progress += Math.random() * 15;
+            progress += Math.random() * 40;
             if (progress > 100) progress = 100;
-            
+
             progressBar.style.width = `${progress}%`;
             progressPercent.textContent = `${Math.round(progress)}%`;
-            
+
             if (progress >= 100) {
                 clearInterval(interval);
-                setTimeout(() => resolve(), 500);
+                setTimeout(() => resolve(), 250);
             }
-        }, 200);
+        }, 100);
     });
 }
 
@@ -115,36 +115,36 @@ async function performScan() {
     const originalHTML = scanButton.innerHTML;
     scanButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-3"></i><span>Scanning...</span>';
     scanButton.classList.add('opacity-80', 'cursor-not-allowed');
-    
+
     try {
         // Start progress animation
         await startProgressAnimation();
-        
+
         // Check active tab
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         if (!tabs || tabs.length === 0) {
             throw new Error('No active tab found');
         }
-        
+
         const tab = tabs[0];
-        
+
         // Check if on Gmail
         if (!tab.url || !tab.url.includes('mail.google.com')) {
             throw new Error('Please open Gmail first');
         }
-        
+
         // Send message to content script
         const response = await chrome.tabs.sendMessage(tab.id, { type: 'REQUEST_EMAIL' });
-        
+
         if (!response?.email) {
             throw new Error('Please open an email to scan');
         }
-        
+
         const email = response.email;
-        
+
         if (email.endsWith('.edu')) {
-            showAlert(`College email detected: ${email}`, 'success');
-            
+            showAlert(`College email detected`, 'success');
+
             const timeSaved = document.querySelector('.stats-card:nth-child(2) .text-2xl');
             if (timeSaved) {
                 const current = parseFloat(timeSaved.textContent.replace('h', ''));
@@ -153,7 +153,7 @@ async function performScan() {
         } else {
             throw new Error('Only college emails are supported');
         }
-        
+
     } catch (error) {
         showAlert(error.message, 'error');
     } finally {
@@ -161,10 +161,10 @@ async function performScan() {
         scanButton.innerHTML = originalHTML;
         scanButton.classList.remove('opacity-80', 'cursor-not-allowed');
         progressContainer.classList.add('hidden');
-        
+
         scanButton.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'via-purple-500', 'to-pink-500');
         scanButton.classList.add('bg-gradient-to-r', 'from-green-500', 'to-emerald-600');
-        
+
         setTimeout(() => {
             scanButton.classList.remove('bg-gradient-to-r', 'from-green-500', 'to-emerald-600');
             scanButton.classList.add('bg-gradient-to-r', 'from-indigo-500', 'via-purple-500', 'to-pink-500');
@@ -174,14 +174,14 @@ async function performScan() {
 
 function setupNavigation() {
     navItems.forEach(item => {
-        item.addEventListener('click', function() {
+        item.addEventListener('click', function () {
             navItems.forEach(i => {
                 i.classList.remove('bg-indigo-500/20', 'border-indigo-400/30', 'glow');
                 i.classList.add('bg-gray-700/50', 'border-transparent');
             });
             this.classList.add('bg-indigo-500/20', 'border-indigo-400/30', 'glow');
             this.classList.remove('bg-gray-700/50', 'border-transparent');
-            
+
             // Show notification for demo
             const label = this.querySelector('span').textContent;
             showAlert(`Navigated to ${label}`, 'info');
@@ -191,15 +191,15 @@ function setupNavigation() {
 
 function setupQuickActions() {
     quickActions.forEach(button => {
-        button.addEventListener('mouseenter', function() {
+        button.addEventListener('mouseenter', function () {
             this.classList.add('transform', 'scale-105');
         });
-        
-        button.addEventListener('mouseleave', function() {
+
+        button.addEventListener('mouseleave', function () {
             this.classList.remove('transform', 'scale-105');
         });
-        
-        button.addEventListener('click', function() {
+
+        button.addEventListener('click', function () {
             const action = this.querySelector('span').textContent;
             showAlert(`${action} feature coming soon!`, 'info');
         });
@@ -212,7 +212,7 @@ function setupSettings() {
             showAlert('Settings panel coming in next update!', 'info');
         });
     }
-    
+
     if (themeBtn) {
         let isDark = true;
         themeBtn.addEventListener('click', () => {
@@ -235,14 +235,14 @@ function initializeEventListeners() {
     if (scanButton) {
         scanButton.addEventListener('click', performScan);
     }
-    
+
     // Close alert button
     document.addEventListener('click', (e) => {
         if (e.target.closest('.fa-times')) {
             hideAlert();
         }
     });
-    
+
     // Setup UI interactions
     setupNavigation();
     setupQuickActions();
