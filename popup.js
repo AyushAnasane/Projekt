@@ -1,4 +1,4 @@
-console.log("Schedulr Extension - Modern Version Loaded");
+console.log("Schedulr Extension - Enhanced with NLP");
 
 const scanButton = document.getElementById('scanButton');
 const progressContainer = document.getElementById('progressContainer');
@@ -10,6 +10,7 @@ const quickActions = document.querySelectorAll('.quick-action');
 const settingsBtn = document.querySelector('.settings-btn');
 const themeBtn = document.querySelector('.theme-btn');
 
+// ===== ALERT SYSTEM =====
 function showAlert(message, type = 'info') {
     console.log(`[ALERT] ${type}: ${message}`);
 
@@ -19,10 +20,7 @@ function showAlert(message, type = 'info') {
         return;
     }
 
-    // Remove hidden class FIRST
     alertBox.classList.remove('hidden');
-
-    // Clear and update content
     alertBox.innerHTML = '';
 
     const typeConfig = {
@@ -54,10 +52,8 @@ function showAlert(message, type = 'info') {
 
     const config = typeConfig[type] || typeConfig.info;
 
-    // Set classes
     alertBox.className = `alert p-4 rounded-xl border ${config.border} ${config.bg} ${config.text} text-sm animate-[slideIn_0.3s_ease-out]`;
 
-    // Create content
     alertBox.innerHTML = `
         <div class="flex items-start">
             <div class="text-lg mr-3">${config.icon}</div>
@@ -71,11 +67,8 @@ function showAlert(message, type = 'info') {
         </div>
     `;
 
-    // Auto-hide after 5 seconds (except errors)
     if (type !== 'error') {
-        setTimeout(() => {
-            hideAlert();
-        }, 5000);
+        setTimeout(() => hideAlert(), 5000);
     }
 }
 
@@ -85,7 +78,6 @@ function hideAlert() {
         alertBox.classList.add('hidden');
     }
 }
-
 
 // ===== PROGRESS ANIMATION =====
 function startProgressAnimation() {
@@ -110,17 +102,131 @@ function startProgressAnimation() {
     });
 }
 
+// ===== GOOGLE CALENDAR FUNCTIONS =====
+function createGoogleCalendarUrl(eventData) {
+    const baseUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE';
+
+    const params = new URLSearchParams();
+
+    // Event title
+    params.append('text', eventData.title || 'Event from Email');
+
+    // Date and time
+    if (eventData.dateTime) {
+        const dt = eventData.dateTime;
+        const formatDateTime = (date) => {
+            return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        };
+
+        const startTime = formatDateTime(dt);
+        const endDate = new Date(dt.getTime() + 60 * 60 * 1000); // +1 hour
+        const endTime = formatDateTime(endDate);
+
+        params.append('dates', `${startTime}/${endTime}`);
+    }
+
+    // Description
+    let description = `Event Type: ${eventData.eventType}\n`;
+    description += `Priority: ${eventData.priority}\n`;
+    if (eventData.sender) {
+        description += `From: ${eventData.sender}\n`;
+    }
+    if (eventData.rawDates.length > 0) {
+        description += `\nDetected dates: ${eventData.rawDates.join(', ')}`;
+    }
+    if (eventData.rawTimes.length > 0) {
+        description += `\nDetected times: ${eventData.rawTimes.join(', ')}`;
+    }
+
+    params.append('details', description);
+
+    // Add reminder based on priority
+    if (eventData.priority === 'high') {
+        params.append('reminder', '1440'); // 1 day before
+    } else if (eventData.priority === 'medium') {
+        params.append('reminder', '60'); // 1 hour before
+    }
+
+    return `${baseUrl}&${params.toString()}`;
+}
+
+function displayEventPreview(eventData) {
+    const previewHtml = `
+        <div class="mt-4 p-4 bg-gray-700/50 rounded-xl border border-gray-600/50">
+            <h3 class="text-sm font-semibold text-white mb-3">📅 Event Preview</h3>
+            
+            <div class="space-y-2 text-xs">
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Title:</span>
+                    <span class="text-white font-medium">${eventData.title}</span>
+                </div>
+                
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Type:</span>
+                    <span class="px-2 py-1 rounded bg-indigo-500/20 text-indigo-300">${eventData.eventType}</span>
+                </div>
+                
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Priority:</span>
+                    <span class="px-2 py-1 rounded ${eventData.priority === 'high' ? 'bg-red-500/20 text-red-300' :
+            eventData.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-300' :
+                'bg-green-500/20 text-green-300'
+        }">${eventData.priority}</span>
+                </div>
+                
+                ${eventData.dateTime ? `
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Date:</span>
+                    <span class="text-white">${eventData.dateTime.toLocaleDateString()}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Time:</span>
+                    <span class="text-white">${eventData.dateTime.toLocaleTimeString()}</span>
+                </div>
+                ` : `
+                <div class="text-yellow-300 text-center py-2">
+                    ⚠️ No specific date/time found
+                </div>
+                `}
+            </div>
+            
+            <button id="addToCalendarBtn" class="w-full mt-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-lg hover:shadow-xl transition-all">
+                <i class="fas fa-calendar-plus mr-2"></i>
+                Add to Google Calendar
+            </button>
+        </div>
+    `;
+
+    // Insert preview into main content
+    const mainContent = document.querySelector('main');
+    const existingPreview = document.getElementById('eventPreview');
+
+    if (existingPreview) {
+        existingPreview.remove();
+    }
+
+    const previewDiv = document.createElement('div');
+    previewDiv.id = 'eventPreview';
+    previewDiv.innerHTML = previewHtml;
+    mainContent.appendChild(previewDiv);
+
+    // Add click handler for calendar button
+    document.getElementById('addToCalendarBtn').addEventListener('click', () => {
+        const calendarUrl = createGoogleCalendarUrl(eventData);
+        chrome.tabs.create({ url: calendarUrl });
+        showAlert('Opening Google Calendar...', 'success');
+    });
+}
+
+// ===== MAIN SCAN FUNCTION =====
 async function performScan() {
-    // Set loading state
     const originalHTML = scanButton.innerHTML;
-    scanButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-3"></i><span>Scanning...</span>';
+    scanButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-3"></i><span>Analyzing...</span>';
     scanButton.classList.add('opacity-80', 'cursor-not-allowed');
 
     try {
-        // Start progress animation
         await startProgressAnimation();
 
-        // Check active tab
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         if (!tabs || tabs.length === 0) {
             throw new Error('No active tab found');
@@ -128,36 +234,45 @@ async function performScan() {
 
         const tab = tabs[0];
 
-        // Check if on Gmail
         if (!tab.url || !tab.url.includes('mail.google.com')) {
             throw new Error('Please open Gmail first');
         }
 
-        // Send message to content script
+        showAlert('Scanning email with AI...', 'info');
+
         const response = await chrome.tabs.sendMessage(tab.id, { type: 'REQUEST_EMAIL' });
 
         if (!response?.email) {
             throw new Error('Please open an email to scan');
         }
 
-        const email = response.email;
+        const { email, eventData } = response;
 
-        if (email.endsWith('.edu')) {
-            showAlert(`College email detected`, 'success');
+        // Check for .edu email
+        if (!email.endsWith('.edu')) {
+            throw new Error('Only college (.edu) emails are supported');
+        }
 
-            const timeSaved = document.querySelector('.stats-card:nth-child(2) .text-2xl');
-            if (timeSaved) {
-                const current = parseFloat(timeSaved.textContent.replace('h', ''));
-                timeSaved.textContent = `${(current + 0.5).toFixed(1)}h`;
-            }
+        // Display results
+        if (eventData.hasValidDate) {
+            showAlert(`✅ Event detected: ${eventData.eventType} on ${eventData.dateTime.toLocaleDateString()}`, 'success');
+            displayEventPreview(eventData);
         } else {
-            throw new Error('Only college emails are supported');
+            showAlert(`⚠️ Email scanned but no clear date/time found. Detected: ${eventData.eventType}`, 'warning');
+            displayEventPreview(eventData);
+        }
+
+        // Update stats (demo)
+        const timeSaved = document.querySelector('.stats-card:nth-child(2) .text-2xl');
+        if (timeSaved) {
+            const current = parseFloat(timeSaved.textContent.replace('h', ''));
+            timeSaved.textContent = `${(current + 0.5).toFixed(1)}h`;
         }
 
     } catch (error) {
+        console.error('Scan error:', error);
         showAlert(error.message, 'error');
     } finally {
-
         scanButton.innerHTML = originalHTML;
         scanButton.classList.remove('opacity-80', 'cursor-not-allowed');
         progressContainer.classList.add('hidden');
@@ -172,17 +287,17 @@ async function performScan() {
     }
 }
 
+// ===== UI SETUP FUNCTIONS =====
 function setupNavigation() {
     navItems.forEach(item => {
         item.addEventListener('click', function () {
             navItems.forEach(i => {
-                i.classList.remove('bg-indigo-500/20', 'border-indigo-400/30', 'glow');
+                i.classList.remove('bg-indigo-500/20', 'border-indigo-400/30');
                 i.classList.add('bg-gray-700/50', 'border-transparent');
             });
-            this.classList.add('bg-indigo-500/20', 'border-indigo-400/30', 'glow');
+            this.classList.add('bg-indigo-500/20', 'border-indigo-400/30');
             this.classList.remove('bg-gray-700/50', 'border-transparent');
 
-            // Show notification for demo
             const label = this.querySelector('span').textContent;
             showAlert(`Navigated to ${label}`, 'info');
         });
@@ -229,36 +344,32 @@ function setupSettings() {
     }
 }
 
-// ===== EVENT LISTENERS =====
+// ===== INITIALIZE =====
 function initializeEventListeners() {
-    // Scan button
     if (scanButton) {
         scanButton.addEventListener('click', performScan);
     }
 
-    // Close alert button
     document.addEventListener('click', (e) => {
         if (e.target.closest('.fa-times')) {
             hideAlert();
         }
     });
 
-    // Setup UI interactions
     setupNavigation();
     setupQuickActions();
     setupSettings();
 }
 
-// ===== INITIALIZE =====
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing...');
+    console.log('Schedulr initialized with NLP capabilities');
     initializeEventListeners();
     showAlert('Schedulr ready! Open a .edu email in Gmail to scan.', 'info');
 });
 
-// ===== EXPORT FOR DEBUGGING =====
+// Export for debugging
 window.showAlert = showAlert;
 window.hideAlert = hideAlert;
 window.performScan = performScan;
 
-console.log('Schedulr extension initialized successfully');
+console.log('Schedulr extension with NLP initialized successfully');
